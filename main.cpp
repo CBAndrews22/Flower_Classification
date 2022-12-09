@@ -12,31 +12,30 @@ float featureAccuracy(std::vector<int>& featureSet, std::vector<std::vector<floa
 bool inSet(const int& possibleFeature,const std::vector<int>& curSet);
 std::vector<int> forwardSelection(std::vector<std::vector<float> >& data);
 void printFeatureSet(const std::vector<int> featureSet);
+std::vector<int> backElimination(std::vector<std::vector<float> >& data);
 
 int main(){
     // // Reading data in from text file
     std::vector<std::vector<float> > data; // 2D vector to store data
     std::vector<int> curFeatureSet;
     std::string fileName;
-    fileName = "CS170_Large_Data__96.txt";
+    int userChoice;
+
+
+    std::cout << "Enter File Name: ";
+    std::cin >> fileName;
+    //fileName = "CS170_Small_Data__96.txt";
     readData(fileName , data);
-    printData(data);
-
-    int numFeatures, numInstances;
-    float accuracy;
-
-    numFeatures = data.size() - 1;
-    numInstances = data[0].size();
-
-
-    std::cout << "\nThis data set has " << numFeatures << " Features and " << numInstances << " rows!\n";
-
-    //curFeatureSet.push_back(1);
-    curFeatureSet.push_back(1);
-
-    forwardSelection(data);
-
-    // Prompt user for forward search or back elimination
+    std::cout << "Choose your search method.\n\t1)Forward Selection\n\t2)Backward Elimination\n";
+    std::cin >> userChoice;
+    if(userChoice == 1)
+    {
+        curFeatureSet = forwardSelection(data);
+    }
+    else
+    {
+        curFeatureSet = backElimination(data);
+    }
 
     return 0;
 
@@ -160,8 +159,8 @@ float featureAccuracy(std::vector<int>& featureSet, std::vector<std::vector<floa
             numCorrect++;
         }
     }
-    std::cout << "Correct: " << numCorrect << '\n' << "Total: " << numRows << '\n';
-    std::cout << "Accuracy = " << numCorrect/numRows << '\n';
+    //std::cout << "Correct: " << numCorrect << '\n' << "Total: " << numRows << '\n';
+    //std::cout << "Accuracy = " << numCorrect/numRows << '\n';
 
     return numCorrect/numRows;
 }
@@ -202,10 +201,10 @@ std::vector<int> forwardSelection(std::vector<std::vector<float> >& data)
                 }
                 std::cout << "Accuracy for feature ";
                 printFeatureSet(testFeatures); 
-                std::cout << " is " << tempAccuracy << "\n\n";
+                std::cout << " is " << tempAccuracy << "\n";
             }
         }
-        std::cout << "Round " << j << " best features set is ";
+        std::cout << "\nRound " << j << " best features set is ";
         printFeatureSet(testBestFeatures);
         std::cout << " with an accuracy of " << testHighAccuracy << '\n';
         if(testHighAccuracy > highestAccuracy)
@@ -218,7 +217,7 @@ std::vector<int> forwardSelection(std::vector<std::vector<float> >& data)
         testHighAccuracy = 0;
 
     }
-    std::cout << "The best feature set is ";
+    std::cout << "\nThe best feature set is ";
     printFeatureSet(curBestFeatures);
     std::cout << " with an accuracy of " << highestAccuracy << '\n';
     return curBestFeatures;
@@ -232,4 +231,67 @@ bool inSet(const int& possibleFeature,const std::vector<int>& curSet)
         if( possibleFeature == curSet[i]) return true;
     }
     return false;
+}
+
+std::vector<int> backElimination(std::vector<std::vector<float> >& data)
+{
+    int numColumns = data.size(),
+        numRows = data[0].size();
+    
+    float testAccuracy;
+    float highestAccuracy = 0;
+    float testHighAccuracy = 0;
+
+
+    std::vector<int> curFeatures,
+                     testFeatures,
+                     curBestFeatures,
+                     testBestFeatures;
+    
+    for(int i = 1; i < numColumns; i++)
+    {
+        curFeatures.push_back(i);
+    }
+        highestAccuracy = featureAccuracy(curFeatures, data);
+        curBestFeatures = curFeatures;
+    
+    for(int i = 1 ; i < numColumns - 1; i++)
+    {
+
+
+        for(int j = 0; j < curFeatures.size(); j++)
+        {
+            testFeatures = curFeatures;
+            testFeatures.erase(testFeatures.begin()+j);
+            testAccuracy = featureAccuracy(testFeatures, data);
+            std::cout << "Testing set ";
+            printFeatureSet(testFeatures);
+            std::cout << " Accuracy: " << testAccuracy << '\n';
+            if(testAccuracy > testHighAccuracy)
+            {
+                testHighAccuracy = testAccuracy;
+                testBestFeatures = testFeatures;
+            }
+        }
+        if(testHighAccuracy > highestAccuracy)
+        {
+            highestAccuracy = testHighAccuracy;
+            curBestFeatures = testBestFeatures;
+        }
+        std::cout << "Round " << i << " done.\nBest feature set ";
+        printFeatureSet(testBestFeatures);
+        std::cout << " Accuracy " << testHighAccuracy << '\n';
+
+        std::cout << "Best set so far ";
+        printFeatureSet(curBestFeatures);
+        std::cout << " Accuracy " << highestAccuracy << "\n\n";
+        testHighAccuracy = 0;
+        curFeatures = testBestFeatures;
+        
+    }
+    std::cout << "\nBest Feature Set ";
+    printFeatureSet(curBestFeatures);
+    std::cout << " Accuracy: " << highestAccuracy << '\n';
+    return curFeatures;
+    
 }
